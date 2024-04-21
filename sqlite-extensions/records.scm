@@ -16,6 +16,49 @@
 ;; along with this program. If not, see
 ;; <https://www.gnu.org/licenses/>.
 
+;;; Commentary:
+
+;; This module exports the syntactic form 'define-sqlite-record-type'
+;; which builds upon 'define-record-type' from (srfi srfi-9), mapping
+;; the record type to a SQLite3 table, along with get, delete, upsert
+;; procedures, along with some other auto-generated utilities.
+;;
+;; Usage example:
+;;
+;; (use-modules (sqlite-extensions base)
+;;              (sqlite-extensions records))
+;;
+;; (define-sqlite-record-type test-table
+;;     "TestTable"
+;;     (make-test-table column1 column2 column3)
+;;     test-table? 
+;;     test-table-all test-table-by-id delete-test-table-by-id!
+;;     (column1 get-column1 "column1" "INTEGER PRIMARY KEY NOT NULL")
+;;     (column2 get-column2 "column2" "TEXT")
+;;     (column3 get-column3 "column3" "INTEGER NOT NULL" set-column3!))
+;;
+;; (test-table-all "/some/sqlite-filename.db")
+;;     -> list of test-table objects
+;;
+;; (test-table-by-id "/some/sqlite-filename.db" 3)
+;;     -> return test-table with "column1" with value of 3 from "TestTable"
+;;
+;; (delete-test-table-by-id "/some/sqlite-filename.db" 3)
+;;     -> unspecified, side-effect of deleting matching record from "TestTable"
+;;
+;; With above example, procedure 'make-test-table-from-db-row' is generated:
+;; 
+;; (make-test-table-from-db-row
+;;     (query "/some/sqlite-filename.db"
+;;            "SELECT * FROM TestTable WHERE column3 > ?"
+;;            10))
+;;     -> list of test-table objects
+;;
+;; test-table-table-definition
+;;     -> variable containing string with the SQL table definition for "TestTable"
+;;
+;;; Code:
+
 (define-module (sqlite-extensions records)
   #:use-module (srfi srfi-9)
   #:use-module (threading-macros)
@@ -104,7 +147,9 @@
     (syntax-case x ()
       ((_ table-name id-column-name)
        #`(lambda (db-filename id)
-	   (execute-non-query! db-filename (format #f "DELETE FROM ~a WHERE ~a = ?" table-name id-column-name) id))))))
+	   (execute-non-query!
+	    db-filename (format #f "DELETE FROM ~a WHERE ~a = ?"
+				table-name id-column-name) id))))))
 
 (define-syntax %define-sqlite-record-type
   (lambda (x)

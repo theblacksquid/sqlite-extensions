@@ -24,5 +24,6 @@
 	       execute-batch!
 	       execute-scalar
 	       table-exists?
-	       define-sqlite-table-record-type))
+	       define-sqlite-table-record-type
+	       define-sqlite-view-record-type))
 

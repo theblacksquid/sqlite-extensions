@@ -63,7 +63,8 @@
   #:use-module (srfi srfi-9)
   #:use-module (threading-macros)
   #:use-module (sqlite-extensions base)
-  #:export (define-sqlite-table-record-type))
+  #:export (define-sqlite-table-record-type
+	    define-sqlite-view-record-type))
 
 (define sql-column-names
   (lambda (field-specs)
@@ -102,6 +103,13 @@
 	     ((name getter column-name column-type setter) #'(name getter setter))))
 	 field-specs)))
 
+(define view-getter-fields
+  (lambda (field-specs)
+    (map (λ (field-spec)
+	   (syntax-case field-spec ()
+	     ((name getter column-name) #'(name getter))))
+	 field-specs)))
+
 (define (create-sql-table-definition table-name field-specs)
   (define column-name (λ (fs) (syntax-case fs () ((name type) #'name))))
   (define column-type (λ (fs) (syntax-case fs () ((name type) #'type))))
@@ -119,6 +127,13 @@
 ~a
 ) " table-name
   column-definitions)))
+
+(define (create-sql-view-definition view-name view-query)
+  (format
+   #f
+   "CREATE VIEW IF NOT EXISTS ~a
+AS
+     ~a  " view-name view-query))
 
 (define-syntax from-db-row
   (lambda (x)
@@ -164,15 +179,16 @@
       ((_ type-name table-name constructor predicate
 	  all-selector by-id-selector by-id-deletor 
 	  field-spec ...)
-       (with-syntax ((table-definition-accessor
-		      (datum->syntax
-		       #'table-name
-		       (symbol-append (syntax->datum #'type-name) '-table-definition)))
-		     (from-db-row-function
-		      (datum->syntax
-		       #'table-name
-		       (symbol-append (syntax->datum (get-constructor-name #'constructor))
-				      '-from-db-row))))
+       (with-syntax
+	   ((table-definition-accessor
+	     (datum->syntax
+	      #'table-name
+	      (symbol-append (syntax->datum #'type-name) '-table-definition)))
+	    (from-db-row-function
+	     (datum->syntax
+	      #'table-name
+	      (symbol-append (syntax->datum (get-constructor-name #'constructor))
+			     '-from-db-row))))
 	 #`(begin
 	     (define-record-type type-name
 	       constructor
@@ -196,6 +212,45 @@
 	     (define from-db-row-function
 	       (from-db-row #,(get-constructor-name #'constructor)
 			    #,@(sql-column-names #'(field-spec ...))))))))))
+
+(define-syntax %define-sqlite-view-record-type
+  (lambda (x)
+    (syntax-case x ()
+      ((_ type-name
+	  view-name constructor
+	  predicate view-query
+	  all-selector by-id-selector
+	  field-spec ...)
+       (with-syntax
+	   ((view-definition-accessor
+	     (datum->syntax
+	      #'view-name
+	      (symbol-append (syntax->datum #'type-name) '-view-definition)))
+	    (from-db-row-function
+	     (datum->syntax
+	      #'view-name
+	      (symbol-append (syntax->datum (get-constructor-name #'constructor))
+			     '-from-db-row))))
+	 #`(begin
+	     (define-record-type type-name
+	       constructor
+	       predicate
+	       #,@(view-getter-fields #'(field-spec ...)))
+	     (define view-definition-accessor
+	       #,(create-sql-view-definition (syntax->datum #'view-name)
+					     (syntax->datum #'view-query)))
+	     (define all-selector
+	       (generic-sql-select-all #,(syntax->datum #'view-name)
+				       #,(get-constructor-name #'constructor)
+				       #,@(sql-view-column-names #'(field-spec ...))))
+	     (define by-id-selector
+	       (generic-sql-select-by-id #,(syntax->datum #'view-name)
+					 #,(get-constructor-name #'constructor)
+					 #,(car (sql-view-column-names #'(field-spec ...)))
+					 #,@(sql-view-column-names #'(field-spec ...))))
+	     (define from-db-row-function
+	       (from-db-row #,(get-constructor-name #'constructor)
+			    #,@(sql-view-column-names #'(field-spec ...))))))))))
 
 (define-syntax-rule (define-sqlite-table-record-type type-name
 	   table-name constructor predicate
@@ -241,3 +296,14 @@ results into the record type,
    type-name table-name constructor predicate
    all-selector by-id-selector by-id-deletor
    field-spec ...))
+
+(define-syntax-rule (define-sqlite-view-record-type type-name
+	  view-name constructor
+	  predicate view-query
+	  all-selector by-id-selector
+	  field-spec ...)
+  (%define-sqlite-view-record-type type-name
+	  view-name constructor
+	  predicate view-query
+	  all-selector by-id-selector
+	  field-spec ...))

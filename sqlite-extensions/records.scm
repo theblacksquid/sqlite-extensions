@@ -131,7 +131,42 @@
 	   table-name constructor predicate
 	   all-selector by-id-selector by-id-deletor
 	   field-spec ...)
-  "Test doc string"
+  "A SQLite extension to srfi-9 record types.
+
+-- Scheme Syntax: define-sqlite-record-type type-name
+         table-name
+         (constructor fieldname ...)
+         predicate
+         all-selector by-id-selector by-id-deletor
+         (fieldname accessor sql-column-name sql-type-name [modifier]) ...
+
+Create a new record type backed by a SQLite table, and make various
+'define's for using it. This syntax can only occur at the top-level,
+not nested within some other form. See the documentation for SRFI-9 in
+the Guile Reference Manual for more details, especially for
+CONSTRUCTOR, PREDICATE, ACCESSOR and MODIFIER.
+
+ALL-SELECTOR is bound to a function to be called as '(ALL-SELECTOR
+db-filename)' that returns all record objects mapped to the SQLite
+table mapped to TYPE-NAME where DB-FILENAME is a string pointing to a
+sqlite database.
+
+BY-ID-SELECTOR is bound to a procedure to be called as '(BY-ID-SELECTOR
+db-filename id)' that returns the record object matching ID
+
+BY-ID-DELETOR is bound to a procedure to be called as '(BY-ID-SELECTOR
+db-filename id)' that deletes the record object matching ID in the
+SQlite table mapped to TYPE-NAME located in the database in
+DB-FILENAME
+
+One can view the generate table definition for the record type by
+using the generated TYPE-NAME-table-definition variable.
+
+The generated procedure CONSTRUCTOR-from-db-row can be used with 'query'
+from (sqlite-extensions base) to automatically map the raw hash table
+results into the record type, 
+
+"
   (%define-sqlite-record-type
    type-name table-name constructor predicate
    all-selector by-id-selector by-id-deletor

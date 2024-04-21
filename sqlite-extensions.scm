@@ -5,5 +5,6 @@
 	       execute-non-query!
 	       execute-batch!
 	       execute-scalar
-	       table-exists?))
+	       table-exists?
+	       define-sqlite-record-type))
 

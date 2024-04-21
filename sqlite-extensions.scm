@@ -6,5 +6,5 @@
 	       execute-batch!
 	       execute-scalar
 	       table-exists?
-	       define-sqlite-record-type))
+	       define-sqlite-table-record-type))
 

@@ -1,4 +1,4 @@
-;;  sqlite-extensions/records.scm --- define-sqlite-record-type
+;;  sqlite-extensions/records.scm --- SQLite3 extensions for SRFI-9 Records
 
 ;; Copyright (C) 2024 Aeron Paul Sioson <theblacksquid@protonmail.com>
 ;; 
@@ -18,7 +18,7 @@
 
 ;;; Commentary:
 
-;; This module exports the syntactic form 'define-sqlite-record-type'
+;; This module exports the syntactic form 'define-sqlite-table-record-type'
 ;; which builds upon 'define-record-type' from (srfi srfi-9), mapping
 ;; the record type to a SQLite3 table, along with get, delete, upsert
 ;; procedures, along with some other auto-generated utilities.
@@ -28,7 +28,7 @@
 ;; (use-modules (sqlite-extensions base)
 ;;              (sqlite-extensions records))
 ;;
-;; (define-sqlite-record-type test-table
+;; (define-sqlite-table-record-type test-table
 ;;     "TestTable"
 ;;     (make-test-table column1 column2 column3)
 ;;     test-table? 
@@ -63,7 +63,7 @@
   #:use-module (srfi srfi-9)
   #:use-module (threading-macros)
   #:use-module (sqlite-extensions base)
-  #:export (define-sqlite-record-type))
+  #:export (define-sqlite-table-record-type))
 
 (define sql-column-names
   (lambda (field-specs)
@@ -79,6 +79,13 @@
 	   (syntax-case field-spec ()
 	     ((name getter column-name column-type) #'(column-name column-type))
 	     ((name getter column-name column-type setter) #'(column-name column-type))))
+	 field-specs)))
+
+(define sql-view-column-names
+  (lambda (field-specs)
+    (map (λ (field-spec)
+	   (syntax-case field-spec ()
+	     ((name getter column-name) #'column-name)))
 	 field-specs)))
 
 (define get-constructor-name
@@ -151,7 +158,7 @@
 	    db-filename (format #f "DELETE FROM ~a WHERE ~a = ?"
 				table-name id-column-name) id))))))
 
-(define-syntax %define-sqlite-record-type
+(define-syntax %define-sqlite-table-record-type
   (lambda (x)
     (syntax-case x ()
       ((_ type-name table-name constructor predicate
@@ -190,13 +197,13 @@
 	       (from-db-row #,(get-constructor-name #'constructor)
 			    #,@(sql-column-names #'(field-spec ...))))))))))
 
-(define-syntax-rule (define-sqlite-record-type type-name
+(define-syntax-rule (define-sqlite-table-record-type type-name
 	   table-name constructor predicate
 	   all-selector by-id-selector by-id-deletor
 	   field-spec ...)
   "A SQLite extension to srfi-9 record types.
 
--- Scheme Syntax: define-sqlite-record-type type-name
+-- Scheme Syntax: define-sqlite-table-record-type type-name
          table-name
          (constructor fieldname ...)
          predicate
@@ -230,7 +237,7 @@ from (sqlite-extensions base) to automatically map the raw hash table
 results into the record type, 
 
 "
-  (%define-sqlite-record-type
+  (%define-sqlite-table-record-type
    type-name table-name constructor predicate
    all-selector by-id-selector by-id-deletor
    field-spec ...))

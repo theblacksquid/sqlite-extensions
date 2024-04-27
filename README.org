@@ -6,6 +6,9 @@ A set of utilities and extensions for using SQLite3 with Guile Scheme.
 
 * Installation
 
+This package depends on libsqlite3-dev and [[https://notabug.org/guile-sqlite3/guile-sqlite3][(sqlite3)]]. Please make sure
+those are installed first.
+
 Copy this folder into one of the directories in your guile %load-path
 variable:
 

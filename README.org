@@ -1,0 +1,61 @@
+#+TITLE: sqlite-extensions
+
+* Overview
+
+A set of utilities and extensions for using SQLite3 with Guile Scheme.
+
+* Installation
+
+Copy this folder into one of the directories in your guile %load-path
+variable:
+
+#+begin_src text
+  scheme@(guile-user)> %load-path
+  $5 = ("/usr/local/share/guile/site/3.0/" "/usr/share/guile/3.0" "/usr/share/guile/site/3.0" "/usr/share/guile/site" "/usr/share/guile")
+#+end_src
+
+Check the value of %load-path in your guile repl.
+
+* Modules
+** (sqlite-extensions base)
+
+*** scheme procedure: (query db-filename sql . args)
+
+Run SQL on the SQLite database pointed to by DB-FILENAME, replacing
+parameters in SQL with ARGS, and return a list of hash tables with the
+requested data.
+
+*** scheme procedure: (execute-non-query! db-filename sql . args)
+
+Run SQL on the SQLite database pointed to by DB-FILENAME, replacing
+parameters in SQL with ARGS, returns unspecified. Recommended for use
+with side-effects.
+
+*** scheme procedure: (execute-scalar db-filename sql . args)
+
+Run SQL on the SQLite database pointed to by DB-FILENAME, replacing
+parameters in SQL with ARGS. Returns the value in the first column of
+the first row of results as a value.
+
+*** scheme procedure: (execute-batch! db-filename sql-forms)
+
+Run each of the SQL-FORMS on DB-FILENAME.
+
+SQL-FORMS are of the syntax (SQL . args)
+
+Return value is unspecified.
+
+*** scheme procedure: (table-exists? db-filename tablename)
+
+Check if the table TABLENAME exists in DB-FILENAME, returns a boolean.
+
+** (sqlite-extensions records)
+
+*** scheme syntax: define-sqlite-table-record-type
+
+#+begin_src scheme
+  
+#+end_src
+
+*** scheme syntax: define-sqlite-view-record-type
+

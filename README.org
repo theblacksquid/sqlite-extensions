@@ -9,15 +9,14 @@ A set of utilities and extensions for using SQLite3 with Guile Scheme.
 This package depends on libsqlite3-dev and [[https://notabug.org/guile-sqlite3/guile-sqlite3][(sqlite3)]]. Please make sure
 those are installed first.
 
-Copy this folder into one of the directories in your guile %load-path
-variable:
+Copy this folder into one of the directories in your site-dir:
 
 #+begin_src text
-  scheme@(guile-user)> %load-path
+  scheme@(guile-user)> (%site-dir)
   $5 = ("/usr/local/share/guile/site/3.0/" "/usr/share/guile/3.0" "/usr/share/guile/site/3.0" "/usr/share/guile/site" "/usr/share/guile")
 #+end_src
 
-Check the value of %load-path in your guile repl.
+Check the value of executing %site-dir in your guile repl.
 
 * Modules
 ** (sqlite-extensions base)

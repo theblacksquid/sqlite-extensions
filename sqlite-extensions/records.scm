@@ -61,7 +61,7 @@
 
 (define-module (sqlite-extensions records)
   #:use-module (srfi srfi-9)
-  #:use-module (threading-macros)
+  #:use-module (sqlite-extensions threading-macros)
   #:use-module (sqlite-extensions base)
   #:export (define-sqlite-table-record-type
 	    define-sqlite-view-record-type))
